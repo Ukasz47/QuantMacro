@@ -9,7 +9,7 @@ params.alpha = 0.36;
 params.beta = 0.99;
 params.sigma = 1;
 params.delta = 0.025;
-params.T = 400;
+params.T = 300;
 params.k_bar = ((1-params.beta*(1-params.delta))/(params.alpha*params.beta))^(1/(params.alpha-1));
 params.k_0 = params.k_bar;
 params.A_t = ones(params.T+1,1);
@@ -56,9 +56,28 @@ while max(abs(dk))/params.k_0 > epsilon
     r_t = r_t_new;
 end
 
-k_t = ((r_t+params.delta)./(params.alpha*params.A_t)).^(1/(params.alpha-1));
-plot(k_t);
+%%
+%===============================================================================================
+%----------------------------------------PLOTTING----------------------------------------------
+%===============================================================================================
 
+k_t = ((r_t+params.delta)./(params.alpha*params.A_t)).^(1/(params.alpha-1));
+c_t(params.T+1) = params.k_bar^params.alpha-params.delta*params.k_bar;
+for t = params.T:-1:1
+    c_t(t) = c_t(t+1)/(params.beta*(params.alpha*k_t(t+1)^(params.alpha-1)+1-params.delta));
+end
+plot(k_t, 'LineWidth',3);        
+legend('k_t');
+xlabel('Time');
+ylabel('Capital');
+title('Plot of k_t');
+%%
+plot(c_t, 'LineWidth',3); 
+legend('c_t');
+xlabel('Time');
+ylabel('Consumption');
+title('Plot of c_t');
+%%
 %===============================================================================================
 %----------------------------------------FUNCTIONS----------------------------------------------
 %===============================================================================================
@@ -79,7 +98,7 @@ function dk = iter(r_t,params)
     ub = [];
 
     for t = params.T:-1:1
-        c_t(t) = c_t(t+1)/(params.beta*(params.alpha*k_t(t+1)^(params.alpha-1)+1-params.delta));
+        c_t(t) = c_t(t+1)/(params.beta*(params.alpha*params.A_t(t+1)*k_t(t+1)^(params.alpha-1)+1-params.delta));
         bc = @(k) feasibility(k,k_s_t(t+1),c_t(t),t,params); %auxiiary function to transmit consumption and future capital as parameters
         k_s_t(t) = lsqnonlin(bc, k_s_t(t+1), lb, ub, options);
     end
