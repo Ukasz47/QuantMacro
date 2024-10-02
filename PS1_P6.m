@@ -9,7 +9,7 @@ params.alpha = 0.36;
 params.beta = 0.99;
 params.sigma = 1;
 params.delta = 0.025;
-params.T = 300;
+params.T = 200;
 params.k_bar = ((1-params.beta*(1-params.delta))/(params.alpha*params.beta))^(1/(params.alpha-1));
 params.k_0 = params.k_bar;
 epsilon = 10^(-6);
@@ -45,16 +45,32 @@ dk = iter(r_t,params);
 while max(abs(dk))/params.k_0 > epsilon
     i = i+1;
     r_t_new(2:params.T+1) = r_t(2:params.T+1) - J\dk;
-    r_t_new = max(r_t_new,10^(-4)*ones(params.T+1,1));
+    r_t_new = max(r_t_new,10^(-10)*ones(params.T+1,1));
     dk = iter(r_t_new,params);
     s = r_t_new(2:params.T+1) - r_t(2:params.T+1);
     J = J + dk*s'/(s'*s);
     r_t = r_t_new;
 end
+%%
+%===============================================================================================
+%----------------------------------------PLOTTING----------------------------------------------
+%===============================================================================================
 
 k_t = ((r_t+params.delta)/params.alpha).^(1/(params.alpha-1));
-plot(k_t);
+c_t(params.T+1) = params.k_bar^params.alpha-params.delta*params.k_bar;
+for t = params.T:-1:1
+    c_t(t) = c_t(t+1)/(params.beta*(params.alpha*k_t(t+1)^(params.alpha-1)+1-params.delta));
+end
+plot(k_t, 'LineWidth',3);   
+hold on;        
+plot(c_t, 'LineWidth',3);   
+hold off;           
 
+legend('k_t', 'c_t');
+xlabel('Time');
+ylabel('Capital');
+title('Plot of k_t c_t');
+%%
 %===============================================================================================
 %----------------------------------------FUNCTIONS----------------------------------------------
 %===============================================================================================
